@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/bootstrap.css">
+    <link rel="stylesheet" href="../static/css/bootstrap4-toggle.min.css">
+    <script type="text/javascript" src="../static/js/jquery-3.5.1.js"></script>
+    <script type="text/javascript" src="../static/js/bootstrap.bundle.js"></script>
+    <script type="text/javascript" src="../static/js/bootstrap4-toggle.min.js"></script>
+    <script type="text/javascript" src="../static/js/myFunc.js"></script>
+    <title>マイポータル</title>
+</head>
+
+<body>
+    <!-- ナビゲーションバー -->
+    <nav class="navbar fixed-top navbar-dark bg-dark">
+        <a class="navbar-brand" href="/">マイポータル</a>
+        <!-- <div>
+            <a class="navbar-brand text-light" href="/edit" style="cursor: pointer;">新規作成</a>
+            <a class="navbar-brand text-light" href="/" style="cursor: pointer;">過去の週報を見る</a>
+        </div> -->
+    </nav>
+    <div class="jumbotron px-lg-5 mb-0 bg-light">
+        <div class="container-fluid px-lg-5 full-height">
+            <!-- 1段目 -->
+            <div class="row">
+                <!-- チケット情報 -->
+                <div class="col-lg-7 bg-light">
+                    <div class="d-flex justify-content-between">
+                        <span style="font-size: x-large;font-weight: bold;">プロジェクト管理</span>
+                        <button type="button" class="btn btn-secondary" onclick="updateAllTickets();">再読み込み</button>
+                    </div>
+                    <div style="height: 500px;overflow-y: scroll;">
+                        <h3>trac</h3>
+                        <table class="table table-sm" id="trac-table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th width=100>#</th>
+                                    <th width=50%>概要</th>
+                                    <th>期限</th>
+                                    <th>マイルストン</th>
+                                    <th>ステータス</th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <div class="text-center">
+                            <div class="spinner-border" role="status" id="trac-spinner">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+    
+                        <h3>backlog</h3>
+                        <table class="table table-sm" id="backlog-table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th width=100>#</th>
+                                    <th width=50%>概要</th>
+                                    <th>期限</th>
+                                    <th>マイルストン</th>
+                                    <th>ステータス</th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <div class="text-center">
+                            <div class="spinner-border" role="status" id="backlog-spinner">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+    
+                        <h3>Redmine(出荷)</h3>
+                        <table class="table table-sm" id="shipment-table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th width=100>#</th>
+                                    <th width=50%>概要</th>
+                                    <th>期限</th>
+                                    <th>マイルストン</th>
+                                    <th>ステータス</th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <div class="text-center">
+                            <div class="spinner-border" role="status" id="shipment-spinner">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+    
+                        <h3>Redmine(ECR-ECO)</h3>
+                        <table class="table table-sm" id="eco-table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th width=100>#</th>
+                                    <th width=50%>概要</th>
+                                    <th>期限</th>
+                                    <th>マイルストン</th>
+                                    <th>ステータス</th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <div class="text-center">
+                            <div class="spinner-border" role="status" id="eco-spinner">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+    
+                        <h3>Redmine(解析依頼)</h3>
+                        <table class="table table-sm" id="bug-table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th width=100>#</th>
+                                    <th width=50%>概要</th>
+                                    <th>期限</th>
+                                    <th>マイルストン</th>
+                                    <th>ステータス</th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <div class="text-center">
+                            <div class="spinner-border" role="status" id="bug-spinner">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                <!-- googleカレンダー -->
+                <div class="col-lg-5 bg-light">
+                    <div class="d-flex justify-content-between">
+                        <span style="font-size: x-large;font-weight: bold;">今日の予定</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <div></div>
+                        <div class="text-center">
+                            <div class="spinner-border" role="status" id="event-spinner">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="btn-group" role="group" aria-label="Basic example">
+                            <button type="button" class="btn btn-primary">新規</button>
+                            <button type="button" class="btn btn-secondary" onclick="updateAllEvents();">再読み込み</button>
+                            <button type="button" class="btn btn-danger">削除</button>
+                        </div>
+                    </div>
+
+                    <div class="list-group" id="event-list"  style="height: 500px;overflow-y: scroll;">
+                    </div>
+                </div>
+            </div>
+            <!-- 2段目 -->
+            <div class="row">
+                <!-- ToDoリスト -->
+                <div class="col-lg-5 bg-primary">
+                    ToDoリスト
+                </div>
+                <!-- みんなの予定 -->
+                <div class="col-lg-4 bg-secondary">
+                    みんなの予定
+                </div>
+                <!-- 天気予報 -->
+                <div class="col-lg-3 bg-light">
+                    <iframe src="../static/etc/test.html" width="100%" height="300">
+                        この部分はインラインフレームを使用してます。
+                    </iframe>
+                </div>
+
+            </div>
+            <!-- 3段目 -->
+            <div class="row">
+                <!-- ごちクル -->
+                <div class="col-lg-4 bg-light">
+                    ごちクル
+                </div>
+                <!-- 自転車台数 -->
+                <div class="col-lg-5 bg-primary">
+                    自転車台数
+                </div>
+                <!-- バス時刻表 -->
+                <div class="col-lg-3 bg-dark">
+                    バス時刻表
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
