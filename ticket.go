@@ -8,6 +8,7 @@ import (
 
 //ResponseTicket レスポンス形式
 type ResponseTicket struct {
+	Message string   `json:"message"`
 	Tickets []Ticket `json:"tickets"`
 }
 
