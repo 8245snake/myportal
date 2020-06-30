@@ -24,7 +24,7 @@ function getTodaysEvents() {
     var spinner_id = 'event-spinner';
     document.getElementById('event-spinner').style.visibility = "visible";
 
-    fetch("https://script.google.com/macros/s/your_key/exec?type=events")
+    fetch("/api/events")
         .then(response => response.json())
         .then(data => {
             // console.log(data.ticket_type);

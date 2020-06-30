@@ -9,7 +9,13 @@ import (
 )
 
 //AppScriptURL エンドポイント
-const AppScriptURL = "https://script.google.com/macros/s/youtkey/exec?"
+const AppScriptURL = "https://script.google.com/macros/s/yourkey/exec"
+
+//BearerToken アクセストークン
+const BearerToken = "your token"
+
+//client httpクライアント
+var client = new(http.Client)
 
 //ResponseCalender カレンダー
 type ResponseCalender struct {
@@ -27,9 +33,23 @@ type CalenderEvent struct {
 }
 
 //getEvents GASにリクエストを送信する
-func getEvents(date *time.Time) ResponseCalender {
-	var calender ResponseCalender
-	resp, err := http.Get(AppScriptURL + "type=events")
+func getEvents(date *time.Time) (calender ResponseCalender) {
+
+	req, err := http.NewRequest("GET", AppScriptURL, nil)
+	if err != nil {
+		calender.Message = err.Error()
+		return calender
+	}
+	req.Header.Set("Authorization", "Bearer "+BearerToken)
+
+	params := req.URL.Query()
+	params.Add("type", "events")
+	if date != nil {
+		params.Add("day", date.Format("2006-01-02"))
+	}
+	req.URL.RawQuery = params.Encode()
+
+	resp, err := client.Do(req)
 	if err != nil {
 		calender.Message = err.Error()
 		return calender

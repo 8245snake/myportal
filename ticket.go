@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+const RedmineAPIKey = ""
+
 //ResponseTicket レスポンス形式
 type ResponseTicket struct {
 	Message string   `json:"message"`
