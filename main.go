@@ -11,7 +11,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	port := "3000"
+	port := "4000"
 
 	//CSSとjsにアクセスするために必要
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
