@@ -2,12 +2,20 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 	"text/template"
 
 	"github.com/PuerkitoBio/goquery"
 )
+
+//ResponseWeather 天気予報
+type ResponseWeather struct {
+	Message    string `json:"message"`
+	RainMapURL string `json:"rain_map_url"`
+}
 
 //GetRainMap 雨雲レーダーの画像URLを取得
 func GetRainMap() string {
@@ -46,4 +54,16 @@ func GetWeatherReportFrame() {
 	}
 	//書き込み
 	writer.Flush()
+}
+
+//天気予報
+func serveWeatherReport(w http.ResponseWriter, r *http.Request) {
+	var data ResponseWeather
+
+	data.RainMapURL = GetRainMap()
+	GetWeatherReportFrame()
+
+	data.Message = "正常に取得しました"
+	jsondata, _ := json.Marshal(data)
+	w.Write(jsondata)
 }

@@ -1,11 +1,26 @@
 window.onload = function (event) {
     updateAllEvents();
     updateAllTickets();
+    updateWeather();
 }
 
 function ZeroPadding(num, digit) {
     return ('00000000' + num).slice(-digit);
 }
+
+////////////////////////////////////////////////////////
+// 天気予報
+////////////////////////////////////////////////////////
+
+//天気予報取得
+function updateWeather(){
+    fetch("/api/weather")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("weather-frame").contentDocument.location.reload(true);
+        });
+}
+
 
 ////////////////////////////////////////////////////////
 // カレンダー
