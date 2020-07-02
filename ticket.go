@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -35,6 +37,57 @@ type Ticket struct {
 	URL string `json:"url"`
 }
 
+//RedmineAPI APIレスポンス構造体
+type RedmineAPI struct {
+	Issues []struct {
+		ID      int `json:"id"`
+		Project struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"project"`
+		Tracker struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"tracker"`
+		Status struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"status"`
+		Priority struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"priority"`
+		Author struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"author"`
+		AssignedTo struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"assigned_to"`
+		Category struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"category"`
+		Subject      string `json:"subject"`
+		Description  string `json:"description"`
+		StartDate    string `json:"start_date"`
+		DueDate      string `json:"due_date"`
+		DoneRatio    int    `json:"done_ratio"`
+		CustomFields []struct {
+			ID       int    `json:"id"`
+			Name     string `json:"name"`
+			Value    string `json:"value"`
+			Multiple bool   `json:"multiple,omitempty"`
+		} `json:"custom_fields"`
+		CreatedOn time.Time `json:"created_on"`
+		UpdatedOn time.Time `json:"updated_on"`
+	} `json:"issues"`
+	TotalCount int `json:"total_count"`
+	Offset     int `json:"offset"`
+	Limit      int `json:"limit"`
+}
+
 const (
 	TicketTypeTrac            = "trac"
 	TicketTypeRedmineBug      = "bug"
@@ -58,6 +111,13 @@ func GetTicketTrac() (tickets ResponseTicket) {
 	params.Add("status", "reopened")
 	params.Add("keywords", "~出荷")
 	params.Add("milestone", "!33.リリース済")
+	params.Add("col", "id")
+	params.Add("col", "summary")
+	params.Add("col", "status")
+	params.Add("col", "milestone")
+	params.Add("col", "due_close")
+	params.Add("order", "due_close")
+
 	req.URL.RawQuery = params.Encode()
 
 	resp, err := client.Do(req)
@@ -92,6 +152,8 @@ func GetTicketTrac() (tickets ResponseTicket) {
 
 		ticket.Status = strings.TrimSpace(row.Find("td.status").Text())
 
+		ticket.TimeLimit = strings.TrimSpace(row.Find("td.due_close").Text())
+
 		tickets.Tickets = append(tickets.Tickets, ticket)
 	})
 
@@ -108,45 +170,48 @@ func serveTicketTrac(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsindata)
 }
 
-func serveTicketRedmineBug(w http.ResponseWriter, r *http.Request) {
-
-	tickets := ResponseTicket{}
-	for i := 0; i < 10; i++ {
-		ID := strconv.Itoa(999 + i)
-		tickets.Tickets = append(tickets.Tickets, Ticket{ID: ID, TicketType: TicketTypeRedmineBug, Status: "未着手", Title: "チケットタイトル" + ID, TimeLimit: "2020/06/27", MineStone: "V3.1"})
+func getRedmineTickets() RedmineAPI {
+	var data RedmineAPI
+	req, err := http.NewRequest("GET", "https://10.212.252.83/redmine/projects/shipping/issues.json", nil)
+	if err != nil {
+		return data
 	}
-	jsindata, _ := json.Marshal(tickets)
-	w.Write(jsindata)
+
+	params := req.URL.Query()
+	params.Add("key", "your_api_key")
+	params.Add("assigned_to_id", "me")
+	params.Add("limit", "100")
+
+	req.URL.RawQuery = params.Encode()
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return data
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return data
+	}
+
+	err = json.NewDecoder(bytes.NewReader(b)).Decode(&data)
+	if err != nil {
+		return data
+	}
+
+	return data
+}
+
+func serveTicketRedmineBug(w http.ResponseWriter, r *http.Request) {
 }
 
 func serveTicketRedmineShipment(w http.ResponseWriter, r *http.Request) {
 
-	tickets := ResponseTicket{}
-	for i := 0; i < 10; i++ {
-		ID := strconv.Itoa(999 + i)
-		tickets.Tickets = append(tickets.Tickets, Ticket{ID: ID, TicketType: TicketTypeRedmineShipment, Status: "未着手", Title: "チケットタイトル" + ID, TimeLimit: "2020/06/27", MineStone: "V3.1"})
-	}
-	jsindata, _ := json.Marshal(tickets)
-	w.Write(jsindata)
 }
 
 func serveTicketRedmineECO(w http.ResponseWriter, r *http.Request) {
-
-	tickets := ResponseTicket{}
-	for i := 0; i < 10; i++ {
-		ID := strconv.Itoa(999 + i)
-		tickets.Tickets = append(tickets.Tickets, Ticket{ID: ID, TicketType: TicketTypeRedmineECO, Status: "未着手", Title: "チケットタイトル" + ID, TimeLimit: "2020/06/27", MineStone: "V3.1"})
-	}
-	jsindata, _ := json.Marshal(tickets)
-	w.Write(jsindata)
 }
 
 func serveTicketBacklog(w http.ResponseWriter, r *http.Request) {
-	tickets := ResponseTicket{}
-	for i := 0; i < 10; i++ {
-		ID := strconv.Itoa(999 + i)
-		tickets.Tickets = append(tickets.Tickets, Ticket{ID: ID, TicketType: TicketTypeRedmineBacklog, Status: "未着手", Title: "チケットタイトル" + ID, TimeLimit: "2020/06/27", MineStone: "V3.1"})
-	}
-	jsindata, _ := json.Marshal(tickets)
-	w.Write(jsindata)
 }
