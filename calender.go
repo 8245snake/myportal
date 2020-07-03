@@ -9,10 +9,7 @@ import (
 )
 
 //AppScriptURL エンドポイント
-const AppScriptURL = "https://script.google.com/macros/s/yourkey/exec"
-
-//BearerToken アクセストークン
-const BearerToken = "your token"
+const AppScriptURL = "https://script.google.com/macros/s/AKfycbxavm6qHSZ-0oHqfOBkJDxXWf-IChtMB-bfNmD6YUN4UxqU_JPn/exec"
 
 //client httpクライアント
 var client = new(http.Client)
@@ -32,6 +29,16 @@ type CalenderEvent struct {
 	Location    string `json:"location"`
 }
 
+//getOAuthToken アクセストークンを取得する
+func getOAuthToken() string {
+	fileName := "C:/Users/USER/MyDrive/API_KEY.txt"
+	bytes, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return ""
+	}
+	return string(bytes)
+}
+
 //getEvents GASにリクエストを送信する
 func getEvents(date *time.Time) (calender ResponseCalender) {
 
@@ -40,7 +47,8 @@ func getEvents(date *time.Time) (calender ResponseCalender) {
 		calender.Message = err.Error()
 		return calender
 	}
-	req.Header.Set("Authorization", "Bearer "+BearerToken)
+	token := getOAuthToken()
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	params := req.URL.Query()
 	params.Add("type", "events")

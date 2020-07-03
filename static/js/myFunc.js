@@ -53,6 +53,10 @@ function getTodaysEvents() {
                 list.appendChild(item);
             });
             document.getElementById(spinner_id).style.visibility = "hidden";
+        }).catch(function(){
+            var item = createListItemNode("エラーが発生しました", "", "", "");
+            list.appendChild(item);
+            document.getElementById(spinner_id).style.visibility = "hidden";
         });
 }
 
@@ -126,6 +130,16 @@ function updateTicketTable(ticket_type, url) {
                 insertNewRow(ticket);
             });
             document.getElementById(spinner_id).style.visibility = "hidden";
+        }).catch(function(){
+            var ticket = new Object
+            ticket.ticket_type = ticket_type;
+            ticket.url = "";
+            ticket.title = "エラーが発生しました";
+            ticket.timelimit = "";
+            ticket.milestone = "";
+            ticket.status = "";
+            insertNewRow(ticket);
+            document.getElementById(spinner_id).style.visibility = "hidden";
         });
 }
 
@@ -135,12 +149,18 @@ function insertNewRow(ticket) {
     var row = table.insertRow(-1);
 
     //IDにはリンクあり
-    var link = document.createElement("a");
-    link.href = ticket.url;
-    link.appendChild(document.createTextNode(ticket.id));
+    var id_node = new Object;
+    if (ticket.url != "") {
+        var link = document.createElement("a");
+        link.href = ticket.url;
+        link.appendChild(document.createTextNode(ticket.id));
+        id_node = link;
+    }else{
+        id_node = document.createTextNode("");
+    }
 
     var col_ID = row.insertCell(-1);
-    col_ID.appendChild(link);
+    col_ID.appendChild(id_node);
 
     var col_title = row.insertCell(-1);
     col_title.appendChild(document.createTextNode(ticket.title));
@@ -153,6 +173,7 @@ function insertNewRow(ticket) {
 
     var col_status = row.insertCell(-1);
     col_status.appendChild(document.createTextNode(ticket.status));
+
 }
 
 //指定した表の行を全て削除する（ヘッダ行は除く）
