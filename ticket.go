@@ -81,6 +81,98 @@ type RedmineCustomField struct {
 	Multiple bool   `json:"multiple,omitempty"`
 }
 
+//BacklogIssues バックログ
+type BacklogIssues []struct {
+	ID        int    `json:"id"`
+	ProjectID int    `json:"projectId"`
+	IssueKey  string `json:"issueKey"`
+	KeyID     int    `json:"keyId"`
+	IssueType struct {
+		ID           int    `json:"id"`
+		ProjectID    int    `json:"projectId"`
+		Name         string `json:"name"`
+		Color        string `json:"color"`
+		DisplayOrder int    `json:"displayOrder"`
+	} `json:"issueType"`
+	Summary     string      `json:"summary"`
+	Description string      `json:"description"`
+	Resolution  interface{} `json:"resolution"`
+	Priority    struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"priority"`
+	Status struct {
+		ID           int    `json:"id"`
+		ProjectID    int    `json:"projectId"`
+		Name         string `json:"name"`
+		Color        string `json:"color"`
+		DisplayOrder int    `json:"displayOrder"`
+	} `json:"status"`
+	Assignee struct {
+		ID           int         `json:"id"`
+		UserID       string      `json:"userId"`
+		Name         string      `json:"name"`
+		RoleType     int         `json:"roleType"`
+		Lang         interface{} `json:"lang"`
+		MailAddress  string      `json:"mailAddress"`
+		NulabAccount interface{} `json:"nulabAccount"`
+		Keyword      string      `json:"keyword"`
+	} `json:"assignee"`
+	Category  []interface{} `json:"category"`
+	Versions  []interface{} `json:"versions"`
+	Milestone []struct {
+		ID             int       `json:"id"`
+		ProjectID      int       `json:"projectId"`
+		Name           string    `json:"name"`
+		Description    string    `json:"description"`
+		StartDate      time.Time `json:"startDate"`
+		ReleaseDueDate time.Time `json:"releaseDueDate"`
+		Archived       bool      `json:"archived"`
+		DisplayOrder   int       `json:"displayOrder"`
+	} `json:"milestone"`
+	StartDate      time.Time   `json:"startDate"`
+	DueDate        time.Time   `json:"dueDate"`
+	EstimatedHours interface{} `json:"estimatedHours"`
+	ActualHours    interface{} `json:"actualHours"`
+	ParentIssueID  int         `json:"parentIssueId"`
+	CreatedUser    struct {
+		ID           int         `json:"id"`
+		UserID       string      `json:"userId"`
+		Name         string      `json:"name"`
+		RoleType     int         `json:"roleType"`
+		Lang         interface{} `json:"lang"`
+		MailAddress  string      `json:"mailAddress"`
+		NulabAccount interface{} `json:"nulabAccount"`
+		Keyword      string      `json:"keyword"`
+	} `json:"createdUser"`
+	Created     time.Time `json:"created"`
+	UpdatedUser struct {
+		ID           int         `json:"id"`
+		UserID       string      `json:"userId"`
+		Name         string      `json:"name"`
+		RoleType     int         `json:"roleType"`
+		Lang         interface{} `json:"lang"`
+		MailAddress  string      `json:"mailAddress"`
+		NulabAccount interface{} `json:"nulabAccount"`
+		Keyword      string      `json:"keyword"`
+	} `json:"updatedUser"`
+	Updated      time.Time `json:"updated"`
+	CustomFields []struct {
+		ID          int    `json:"id"`
+		FieldTypeID int    `json:"fieldTypeId"`
+		Name        string `json:"name"`
+		Value       []struct {
+			ID           int    `json:"id"`
+			Name         string `json:"name"`
+			DisplayOrder int    `json:"displayOrder"`
+		} `json:"value"`
+		OtherValue interface{} `json:"otherValue,omitempty"`
+	} `json:"customFields"`
+	Attachments []interface{} `json:"attachments"`
+	SharedFiles []interface{} `json:"sharedFiles"`
+	Stars       []interface{} `json:"stars"`
+}
+
 const (
 	TicketTypeTrac            = "trac"
 	TicketTypeRedmineBug      = "bug"
@@ -88,6 +180,41 @@ const (
 	TicketTypeRedmineECO      = "eco"
 	TicketTypeRedmineBacklog  = "backlog"
 )
+
+//GetTicketBacklog リクエスト送信
+func GetTicketBacklog() BacklogIssues {
+	var data BacklogIssues
+	req, err := http.NewRequest("GET", "https://hoge.backlog.jp/api/v2/issues", nil)
+	if err != nil {
+		return data
+	}
+
+	params := req.URL.Query()
+	params.Add("apiKey", "secret_key")
+	params.Add("assigneeId[]", "255301")
+	params.Add("statusId[]", "1")
+	params.Add("statusId[]", "2")
+
+	req.URL.RawQuery = params.Encode()
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return data
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return data
+	}
+
+	err = json.NewDecoder(bytes.NewReader(b)).Decode(&data)
+	if err != nil {
+		return data
+	}
+
+	return data
+}
 
 //GetTicketTrac tracをスクレイピングする
 func GetTicketTrac() (tickets ResponseTicket) {
@@ -268,4 +395,23 @@ func serveTicketRedmineECO(w http.ResponseWriter, r *http.Request) {
 }
 
 func serveTicketBacklog(w http.ResponseWriter, r *http.Request) {
+	issues := GetTicketBacklog()
+	var tickets ResponseTicket
+	for _, issue := range issues {
+		var ticket Ticket
+		ticket.TicketType = TicketTypeRedmineBacklog
+		ticket.ID = issue.IssueKey
+		ticket.Title = issue.Summary
+		ticket.URL = "https://hoge.backlog.jp/view/" + issue.IssueKey
+		if len(issue.Milestone) > 0 {
+			ticket.MineStone = issue.Milestone[0].Name
+			ticket.TimeLimit = issue.Milestone[0].ReleaseDueDate.Format("2006/01/02")
+		}
+		ticket.Status = issue.Status.Name
+		tickets.Tickets = append(tickets.Tickets, ticket)
+	}
+
+	tickets.Message = "OK"
+	jsindata, _ := json.Marshal(tickets)
+	w.Write(jsindata)
 }
