@@ -20,6 +20,21 @@ type ResponseCalender struct {
 	Events  []CalenderEvent `json:"events"`
 }
 
+//ResponseToDoList リスト
+type ResponseToDoList struct {
+	Message string     `json:"message"`
+	Tasks   []ToDoTask `json:"tasks"`
+}
+
+//ToDoTask タスク
+type ToDoTask struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Timelimit   string `json:"timelimit"`
+	Completed   bool   `json:"completed"`
+}
+
 //CalenderEvent イベント
 type CalenderEvent struct {
 	Title       string `json:"title"`
@@ -75,30 +90,45 @@ func getEvents(date *time.Time) (calender ResponseCalender) {
 		calender.Message = err.Error()
 		return calender
 	}
-	calender.Message = "正常に取得しました"
+	calender.Message = "OK"
 	return calender
 }
 
 //getToDoList GASにリクエストを送信する
-func getToDoList(date *time.Time) (ResponseCalender, error) {
-	var calender ResponseCalender
-	resp, err := http.Get(AppScriptURL + "type=tasks")
+func getToDoList() ResponseToDoList {
+	var todo ResponseToDoList
+	req, err := http.NewRequest("GET", AppScriptURL, nil)
 	if err != nil {
-		return calender, err
+		todo.Message = err.Error()
+		return todo
+	}
+	token := getOAuthToken()
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	params := req.URL.Query()
+	params.Add("type", "tasks")
+	req.URL.RawQuery = params.Encode()
+
+	resp, err := client.Do(req)
+	if err != nil {
+		todo.Message = err.Error()
+		return todo
 	}
 	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return calender, err
+		todo.Message = err.Error()
+		return todo
 	}
 
-	err = json.NewDecoder(bytes.NewReader(b)).Decode(&calender)
+	err = json.NewDecoder(bytes.NewReader(b)).Decode(&todo)
 	if err != nil {
-		return calender, err
+		todo.Message = err.Error()
+		return todo
 	}
-
-	return calender, nil
+	todo.Message = "OK"
+	return todo
 }
 
 func serveEvents(w http.ResponseWriter, r *http.Request) {
@@ -108,5 +138,7 @@ func serveEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func serveToDoList(w http.ResponseWriter, r *http.Request) {
-
+	todolist := getToDoList()
+	jsondata, _ := json.Marshal(todolist)
+	w.Write(jsondata)
 }
