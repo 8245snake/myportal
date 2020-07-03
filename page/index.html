@@ -27,13 +27,17 @@
             <!-- 1段目 -->
             <div class="row">
                 <!-- チケット情報 -->
-                <div class="col-lg-7 bg-light">
+                <div class="col-lg-8 bg-light">
                     <div class="d-flex justify-content-between">
                         <span style="font-size: x-large;font-weight: bold;">プロジェクト管理</span>
                         <button type="button" class="btn btn-secondary" onclick="updateAllTickets();">再読み込み</button>
                     </div>
-                    <div style="height: 500px;overflow-y: scroll;">
-                        <h3>trac</h3>
+                    <div style="height: 800px;overflow-y: scroll;">
+                        <div class="media">
+                            <img class="d-flex align-self-end mr-3"
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Trac_logo.svg/200px-Trac_logo.svg.png"
+                                alt="trac" style="height: 30px;">
+                        </div>
                         <table class="table table-sm" id="trac-table">
                             <thead class="thead-light">
                                 <tr>
@@ -50,8 +54,11 @@
                                 <span class="sr-only">Loading...</span>
                             </div>
                         </div>
-    
-                        <h3>backlog</h3>
+                        <div class="media">
+                            <img class="d-flex align-self-end mr-3"
+                                src="https://project-management.com/wp-content/uploads/2017/12/backlog-logo-300x89.png"
+                                alt="backlog" style="height: 30px;">
+                        </div>
                         <table class="table table-sm" id="backlog-table">
                             <thead class="thead-light">
                                 <tr>
@@ -68,8 +75,12 @@
                                 <span class="sr-only">Loading...</span>
                             </div>
                         </div>
-    
-                        <h3>Redmine(出荷)</h3>
+                        <div class="media">
+                            <img class="d-flex align-self-start mr-3"
+                                src="https://upload.wikimedia.org/wikipedia/commons/archive/3/3f/20101216135906%21Redmine_logo.svg"
+                                alt="shipping" style="height: 30px;">
+                            <h3>出荷管理</h3>
+                        </div>
                         <table class="table table-sm" id="shipment-table">
                             <thead class="thead-light">
                                 <tr>
@@ -86,8 +97,13 @@
                                 <span class="sr-only">Loading...</span>
                             </div>
                         </div>
-    
-                        <h3>Redmine(ECR-ECO)</h3>
+
+                        <div class="media">
+                            <img class="d-flex align-self-start mr-3"
+                                src="https://upload.wikimedia.org/wikipedia/commons/archive/3/3f/20101216135906%21Redmine_logo.svg"
+                                alt="shipping" style="height: 30px;">
+                            <h3>簡易ECR-ECO</h3>
+                        </div>
                         <table class="table table-sm" id="eco-table">
                             <thead class="thead-light">
                                 <tr>
@@ -104,8 +120,13 @@
                                 <span class="sr-only">Loading...</span>
                             </div>
                         </div>
-    
-                        <h3>Redmine(解析依頼)</h3>
+
+                        <div class="media">
+                            <img class="d-flex align-self-start mr-3"
+                                src="https://upload.wikimedia.org/wikipedia/commons/archive/3/3f/20101216135906%21Redmine_logo.svg"
+                                alt="shipping" style="height: 30px;">
+                            <h3>解析依頼</h3>
+                        </div>
                         <table class="table table-sm" id="bug-table">
                             <thead class="thead-light">
                                 <tr>
@@ -123,10 +144,10 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
                 <!-- googleカレンダー -->
-                <div class="col-lg-5 bg-light">
+                <div class="col-lg-4 bg-light">
                     <div class="d-flex justify-content-between">
                         <span style="font-size: x-large;font-weight: bold;">今日の予定</span>
                     </div>
@@ -138,13 +159,13 @@
                             </div>
                         </div>
                         <div class="btn-group" role="group" aria-label="Basic example">
-                            <button type="button" class="btn btn-primary">新規</button>
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#event-modal">新規</button>
                             <button type="button" class="btn btn-secondary" onclick="updateAllEvents();">再読み込み</button>
                             <button type="button" class="btn btn-danger">削除</button>
                         </div>
                     </div>
-
-                    <div class="list-group" id="event-list"  style="height: 500px;overflow-y: scroll;">
+                    <!-- リスト -->
+                    <div class="list-group" id="event-list" style="height: 800px;overflow-y: scroll;">
                     </div>
                 </div>
             </div>
@@ -179,6 +200,47 @@
                 <!-- バス時刻表 -->
                 <div class="col-lg-3 bg-dark">
                     バス時刻表
+                </div>
+            </div>
+            <!-- Button trigger modal -->
+            <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#event-modal">
+                Launch centered demo modal
+            </button> -->
+
+            <!-- カレンダー入力のModal -->
+            <div class="modal" id="event-modal" tabindex="-1" role="dialog"
+                aria-labelledby="event-modal-label" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="event-modal-label">新規予定入力</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form>
+                                <div class="form-group">
+                                    <label for="event-modal-datetime">日時</label>
+                                    <input type="text" class="form-control" id="event-modal-datetime"
+                                        placeholder="Example input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="event-modal-title">タイトル</label>
+                                    <input type="text" class="form-control" id="event-modal-title"
+                                        placeholder="Another input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="event-modal-description">内容</label>
+                                    <textarea id="event-modal-description" class="form-control" rows="10"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
