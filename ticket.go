@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
-const RedmineAPIKey = ""
+//RedmineAPIKey APIキー
+const RedmineAPIKey = "6e353c242541c24d7879ca11e60f6a55541a227d"
 
 //ResponseTicket レスポンス形式
 type ResponseTicket struct {
@@ -39,53 +41,44 @@ type Ticket struct {
 
 //RedmineAPI APIレスポンス構造体
 type RedmineAPI struct {
-	Issues []struct {
-		ID      int `json:"id"`
-		Project struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"project"`
-		Tracker struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"tracker"`
-		Status struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"status"`
-		Priority struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"priority"`
-		Author struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"author"`
-		AssignedTo struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"assigned_to"`
-		Category struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"category"`
-		Subject      string `json:"subject"`
-		Description  string `json:"description"`
-		StartDate    string `json:"start_date"`
-		DueDate      string `json:"due_date"`
-		DoneRatio    int    `json:"done_ratio"`
-		CustomFields []struct {
-			ID       int    `json:"id"`
-			Name     string `json:"name"`
-			Value    string `json:"value"`
-			Multiple bool   `json:"multiple,omitempty"`
-		} `json:"custom_fields"`
-		CreatedOn time.Time `json:"created_on"`
-		UpdatedOn time.Time `json:"updated_on"`
-	} `json:"issues"`
-	TotalCount int `json:"total_count"`
-	Offset     int `json:"offset"`
-	Limit      int `json:"limit"`
+	Issues     []RedmineIssue `json:"issues"`
+	TotalCount int            `json:"total_count"`
+	Offset     int            `json:"offset"`
+	Limit      int            `json:"limit"`
+}
+
+//RedmineIssue 課題
+type RedmineIssue struct {
+	ID           int                  `json:"id"`
+	Project      RedmineField         `json:"project"`
+	Tracker      RedmineField         `json:"tracker"`
+	Status       RedmineField         `json:"status"`
+	Priority     RedmineField         `json:"priority"`
+	Author       RedmineField         `json:"author"`
+	AssignedTo   RedmineField         `json:"assigned_to"`
+	Category     RedmineField         `json:"category"`
+	Subject      string               `json:"subject"`
+	Description  string               `json:"description"`
+	StartDate    string               `json:"start_date"`
+	DueDate      string               `json:"due_date"`
+	DoneRatio    int                  `json:"done_ratio"`
+	CustomFields []RedmineCustomField `json:"custom_fields"`
+	CreatedOn    time.Time            `json:"created_on"`
+	UpdatedOn    time.Time            `json:"updated_on"`
+}
+
+//RedmineField 標準項目
+type RedmineField struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+//RedmineCustomField カスタム項目
+type RedmineCustomField struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Value    string `json:"value"`
+	Multiple bool   `json:"multiple,omitempty"`
 }
 
 const (
@@ -170,15 +163,15 @@ func serveTicketTrac(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsindata)
 }
 
-func getRedmineTickets() RedmineAPI {
+func getRedmineTickets(endpoint string) RedmineAPI {
 	var data RedmineAPI
-	req, err := http.NewRequest("GET", "https://10.212.252.83/redmine/projects/shipping/issues.json", nil)
+	req, err := http.NewRequest("GET", "https://10.212.252.83/redmine/projects/"+endpoint+"/issues.json", nil)
 	if err != nil {
 		return data
 	}
 
 	params := req.URL.Query()
-	params.Add("key", "your_api_key")
+	params.Add("key", RedmineAPIKey)
 	params.Add("assigned_to_id", "me")
 	params.Add("limit", "100")
 
@@ -203,14 +196,75 @@ func getRedmineTickets() RedmineAPI {
 	return data
 }
 
+func getCustonFieldValue(issue RedmineIssue, name string) string {
+	for _, cf := range issue.CustomFields {
+		if name == cf.Name {
+			return cf.Value
+		}
+	}
+	return ""
+}
+
 func serveTicketRedmineBug(w http.ResponseWriter, r *http.Request) {
+	apiData := getRedmineTickets("support-request")
+	var tickets ResponseTicket
+
+	for _, issue := range apiData.Issues {
+		var ticket Ticket
+		ticket.TicketType = TicketTypeRedmineBug
+		ticket.ID = strconv.Itoa(issue.ID)
+		ticket.Title = issue.Subject
+		ticket.URL = "https://10.212.252.83/redmine/issues/" + ticket.ID
+		ticket.MineStone = getCustonFieldValue(issue, "施設名")
+		ticket.TimeLimit = issue.DueDate
+		ticket.Status = issue.Status.Name
+		tickets.Tickets = append(tickets.Tickets, ticket)
+	}
+
+	tickets.Message = "OK"
+	jsindata, _ := json.Marshal(tickets)
+	w.Write(jsindata)
 }
 
 func serveTicketRedmineShipment(w http.ResponseWriter, r *http.Request) {
+	apiData := getRedmineTickets("shipping")
+	var tickets ResponseTicket
 
+	for _, issue := range apiData.Issues {
+		var ticket Ticket
+		ticket.TicketType = TicketTypeRedmineShipment
+		ticket.ID = strconv.Itoa(issue.ID)
+		ticket.Title = issue.Subject
+		ticket.URL = "https://10.212.252.83/redmine/issues/" + ticket.ID
+		ticket.MineStone = getCustonFieldValue(issue, "施設リスト")
+		ticket.Status = issue.Status.Name
+		tickets.Tickets = append(tickets.Tickets, ticket)
+	}
+
+	tickets.Message = "OK"
+	jsindata, _ := json.Marshal(tickets)
+	w.Write(jsindata)
 }
 
 func serveTicketRedmineECO(w http.ResponseWriter, r *http.Request) {
+	apiData := getRedmineTickets("ecr-eco_asakai")
+	var tickets ResponseTicket
+
+	for _, issue := range apiData.Issues {
+		var ticket Ticket
+		ticket.TicketType = TicketTypeRedmineECO
+		ticket.ID = getCustonFieldValue(issue, "文書管理番号")
+		ticket.Title = issue.Subject
+		ticket.URL = "https://10.212.252.83/redmine/issues/" + strconv.Itoa(issue.ID)
+		ticket.MineStone = ""
+		ticket.TimeLimit = issue.DueDate
+		ticket.Status = issue.Status.Name
+		tickets.Tickets = append(tickets.Tickets, ticket)
+	}
+
+	tickets.Message = "OK"
+	jsindata, _ := json.Marshal(tickets)
+	w.Write(jsindata)
 }
 
 func serveTicketBacklog(w http.ResponseWriter, r *http.Request) {
