@@ -63,7 +63,7 @@ func serveWeatherReport(w http.ResponseWriter, r *http.Request) {
 	data.RainMapURL = GetRainMap()
 	GetWeatherReportFrame()
 
-	data.Message = "正常に取得しました"
+	data.Message = "OK"
 	jsondata, _ := json.Marshal(data)
 	w.Write(jsondata)
 }
