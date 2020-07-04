@@ -2,10 +2,85 @@ window.onload = function (event) {
     updateAllEvents();
     updateAllTickets();
     updateWeather();
+    updateToDO();
 }
 
 function ZeroPadding(num, digit) {
     return ('00000000' + num).slice(-digit);
+}
+
+////////////////////////////////////////////////////////
+// ToDoリスト
+////////////////////////////////////////////////////////
+
+function updateToDO(){
+    var list = document.getElementById("todo-list");
+    //子要素を全て削除
+    list.textContent = null;
+    var spinner_id = 'todo-spinner';
+    document.getElementById('todo-spinner').style.visibility = "visible";
+
+    fetch("/api/todo")
+    .then(response => response.json())
+    .then(data => {
+        var count = 1;
+        data.tasks.forEach(task => {
+            console.log(task.title);
+            var item = createTiDoItem(task.id, task.title, task.timelimit, task.description);
+            item.id = "todo-item-" + count;
+            list.appendChild(item);
+            count++;
+        });
+        document.getElementById(spinner_id).style.visibility = "hidden";
+    }).catch(function(){
+        var item = createTiDoItem("", "エラーが発生しました", "", "");
+        item.id = "todo-item-error"
+        list.appendChild(item);
+        document.getElementById(spinner_id).style.visibility = "hidden";
+    });
+}
+
+//ノードを作成
+function createTiDoItem(ID, title, timelimit, description) {
+
+    var h5_title = document.createElement('h5');
+    h5_title.classList.add("mb-1");
+    h5_title.innerText = title;
+
+    var small_timelimit = document.createElement('small');
+    var datetime = new Date(timelimit);
+    if (datetime){
+        small_timelimit.innerText = datetime.getFullYear() + '/' + datetime.getMonth() + '/' + datetime.getDate();
+    }else{
+        small_timelimit.innerText = timelimit;
+    }
+    
+
+    var div = document.createElement('div');
+    div.classList.add("d-flex");
+    div.classList.add("w-100");
+    div.classList.add("justify-content-between");
+    div.appendChild(h5_title);
+    div.appendChild(small_timelimit);
+
+    var p_description  = document.createElement('p');
+    p_description.classList.add("mb-1");
+    p_description.innerText = description;
+
+    var hidden_ID = document.createElement('input');
+    hidden_ID.value = ID;
+    hidden_ID.hidden = true;
+
+    var element = document.createElement('a');
+    element.classList.add("list-group-item");
+    element.classList.add("list-group-item-action");
+    element.classList.add("flex-column");
+    element.classList.add("align-items-start");
+
+    element.appendChild(div);
+    element.appendChild(p_description);
+    element.appendChild(hidden_ID);
+    return element;
 }
 
 ////////////////////////////////////////////////////////
@@ -20,7 +95,6 @@ function updateWeather(){
             document.getElementById("weather-frame").contentDocument.location.reload(true);
         });
 }
-
 
 ////////////////////////////////////////////////////////
 // カレンダー
@@ -42,7 +116,7 @@ function getTodaysEvents() {
     fetch("/api/events")
         .then(response => response.json())
         .then(data => {
-            // console.log(data.ticket_type);
+            var count = 1;
             data.events.forEach(event => {
                 console.log(event.title);
                 var start = new Date(event.start);
@@ -50,11 +124,14 @@ function getTodaysEvents() {
                 var time = ZeroPadding(start.getHours(), 2) + ':' + ZeroPadding(start.getMinutes(), 2) +
                     '～' + ZeroPadding(end.getHours(), 2) + ':' + ZeroPadding(end.getMinutes(), 2);
                 var item = createListItemNode(time, event.title, event.description, event.location);
+                item.id = "event-item-" + count;
                 list.appendChild(item);
+                count++;
             });
             document.getElementById(spinner_id).style.visibility = "hidden";
         }).catch(function(){
             var item = createListItemNode("エラーが発生しました", "", "", "");
+            item.id = "event-item-error"
             list.appendChild(item);
             document.getElementById(spinner_id).style.visibility = "hidden";
         });
@@ -86,6 +163,10 @@ function createListItemNode(datetime, title, description, place) {
     element.appendChild(h5);
     element.appendChild(main);
     element.appendChild(small);
+
+    element.ondblclick = function(e){
+        console.log(e.path);
+    }
     return element;
 }
 
