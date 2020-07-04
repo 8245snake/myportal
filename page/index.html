@@ -165,17 +165,12 @@
                         </div>
                     </div>
                     <!-- リスト -->
-                    <div class="list-group" id="event-list" style="height: 800px;overflow-y: scroll;">
-                    </div>
-                </div>
-            </div>
-            <!-- 2段目 -->
-            <span style="font-size: x-large;font-weight: bold;">ToDoリスト</span>
-            <div class="row">
-                <!-- ToDoリスト -->
-                <div class="col-lg-4">
+                    <div class="list-group" id="event-list" style="min-height: 350px;max-height: 350px; overflow-y: scroll;"></div>
+
                     <div class="d-flex justify-content-between">
-                        <div></div>
+                        <div>
+                            <span style="font-size: x-large;font-weight: bold;">ToDoリスト</span>
+                        </div>
                         <div class="text-center">
                             <div class="spinner-border" role="status" id="todo-spinner">
                                 <span class="sr-only">Loading...</span>
@@ -188,9 +183,12 @@
                         </div>
                     </div>
                     <!-- リスト -->
-                    <div class="list-group" id="todo-list" style="height: 800px;overflow-y: scroll;">
+                    <div class="list-group" id="todo-list" style="min-height: 350px;max-height: 350px; overflow-y: scroll;">
                     </div>
                 </div>
+            </div>
+            <!-- 2段目 -->
+            <div class="row">
                 <!-- みんなの予定 -->
                 <div class="col-lg-4 bg-secondary">
                     みんなの予定

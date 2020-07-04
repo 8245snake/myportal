@@ -8,8 +8,12 @@ import (
 	"time"
 )
 
-//AppScriptURL エンドポイント
-const AppScriptURL = "https://script.google.com/macros/s/AKfycbxavm6qHSZ-0oHqfOBkJDxXWf-IChtMB-bfNmD6YUN4UxqU_JPn/exec"
+const (
+	AppScriptURL       = "https://script.google.com/macros/s/AKfycbxavm6qHSZ-0oHqfOBkJDxXWf-IChtMB-bfNmD6YUN4UxqU_JPn/exec"
+	AppScriptEvents    = "events"
+	AppScriptTasks     = "tasks"
+	AppScriptSchedules = "schedules"
+)
 
 //client httpクライアント
 var client = new(http.Client)
@@ -20,10 +24,43 @@ type ResponseCalender struct {
 	Events  []CalenderEvent `json:"events"`
 }
 
+//SetMessage メッセージをセットする
+func (r *ResponseCalender) SetMessage(msg string) {
+	r.Message = msg
+}
+
 //ResponseToDoList リスト
 type ResponseToDoList struct {
 	Message string     `json:"message"`
 	Tasks   []ToDoTask `json:"tasks"`
+}
+
+//SetMessage メッセージをセットする
+func (r *ResponseToDoList) SetMessage(msg string) {
+	r.Message = msg
+}
+
+//ResponseSchedule みんなのスケジュール
+type ResponseSchedule struct {
+	Message   string     `json:"message"`
+	Schedules []Schedule `json:"schedule"`
+}
+
+//SetMessage メッセージをセットする
+func (r *ResponseSchedule) SetMessage(msg string) {
+	r.Message = msg
+}
+
+//ResponseFromGAS APIへのレスポンス共通化
+type ResponseFromGAS interface {
+	SetMessage(string)
+}
+
+//Schedule スケジュール
+type Schedule struct {
+	Name string `json:"name"`
+	Item string `json:"item"`
+	Day  string `json:"day"`
 }
 
 //ToDoTask タスク
@@ -54,19 +91,19 @@ func getOAuthToken() string {
 	return string(bytes)
 }
 
-//getEvents GASにリクエストを送信する
-func getEvents(date *time.Time) (calender ResponseCalender) {
+//GetFromGAS GASにリクエストを送信する
+func GetFromGAS(endpoint string, date *time.Time) (data ResponseFromGAS) {
 
 	req, err := http.NewRequest("GET", AppScriptURL, nil)
 	if err != nil {
-		calender.Message = err.Error()
-		return calender
+		data.SetMessage(err.Error())
+		return data
 	}
 	token := getOAuthToken()
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	params := req.URL.Query()
-	params.Add("type", "events")
+	params.Add("type", endpoint)
 	if date != nil {
 		params.Add("day", date.Format("2006-01-02"))
 	}
@@ -74,71 +111,56 @@ func getEvents(date *time.Time) (calender ResponseCalender) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		calender.Message = err.Error()
-		return calender
+		data.SetMessage(err.Error())
+		return data
 	}
 	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		calender.Message = err.Error()
-		return calender
+		data.SetMessage(err.Error())
+		return data
 	}
 
-	err = json.NewDecoder(bytes.NewReader(b)).Decode(&calender)
+	// fmt.Printf("%s\n", b)
+
+	switch endpoint {
+	case AppScriptEvents:
+		var events ResponseCalender
+		err = json.NewDecoder(bytes.NewReader(b)).Decode(&events)
+		data = &events
+	case AppScriptTasks:
+		var tasks ResponseToDoList
+		err = json.NewDecoder(bytes.NewReader(b)).Decode(&tasks)
+		data = &tasks
+	case AppScriptSchedules:
+		var schedule ResponseSchedule
+		err = json.NewDecoder(bytes.NewReader(b)).Decode(&schedule)
+		data = &schedule
+	}
+
 	if err != nil {
-		calender.Message = err.Error()
-		return calender
+		data.SetMessage(err.Error())
+		return data
 	}
-	calender.Message = "OK"
-	return calender
-}
-
-//getToDoList GASにリクエストを送信する
-func getToDoList() ResponseToDoList {
-	var todo ResponseToDoList
-	req, err := http.NewRequest("GET", AppScriptURL, nil)
-	if err != nil {
-		todo.Message = err.Error()
-		return todo
-	}
-	token := getOAuthToken()
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	params := req.URL.Query()
-	params.Add("type", "tasks")
-	req.URL.RawQuery = params.Encode()
-
-	resp, err := client.Do(req)
-	if err != nil {
-		todo.Message = err.Error()
-		return todo
-	}
-	defer resp.Body.Close()
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		todo.Message = err.Error()
-		return todo
-	}
-
-	err = json.NewDecoder(bytes.NewReader(b)).Decode(&todo)
-	if err != nil {
-		todo.Message = err.Error()
-		return todo
-	}
-	todo.Message = "OK"
-	return todo
+	data.SetMessage("OK")
+	return data
 }
 
 func serveEvents(w http.ResponseWriter, r *http.Request) {
-	events := getEvents(nil)
+	events := GetFromGAS(AppScriptEvents, nil)
 	jsondata, _ := json.Marshal(events)
 	w.Write(jsondata)
 }
 
 func serveToDoList(w http.ResponseWriter, r *http.Request) {
-	todolist := getToDoList()
+	todolist := GetFromGAS(AppScriptTasks, nil)
 	jsondata, _ := json.Marshal(todolist)
+	w.Write(jsondata)
+}
+
+func serveSchedule(w http.ResponseWriter, r *http.Request) {
+	schedules := GetFromGAS(AppScriptSchedules, nil)
+	jsondata, _ := json.Marshal(schedules)
 	w.Write(jsondata)
 }
