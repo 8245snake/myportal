@@ -35,6 +35,8 @@ func main() {
 	http.HandleFunc("/api/weather", serveWeatherReport)
 	//みんなのスケジュール
 	http.HandleFunc("/api/schedule", serveSchedule)
+	//ごちクル
+	http.HandleFunc("/api/gochikuru", serveGochikuruMenue)
 
 	//開始
 	log.Printf("Server listening on port %s", port)
