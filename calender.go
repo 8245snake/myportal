@@ -43,7 +43,7 @@ func (r *ResponseToDoList) SetMessage(msg string) {
 //ResponseSchedule みんなのスケジュール
 type ResponseSchedule struct {
 	Message   string     `json:"message"`
-	Schedules []Schedule `json:"schedule"`
+	Schedules []Schedule `json:"schedules"`
 }
 
 //SetMessage メッセージをセットする
@@ -58,9 +58,10 @@ type ResponseFromGAS interface {
 
 //Schedule スケジュール
 type Schedule struct {
-	Name string `json:"name"`
-	Item string `json:"item"`
-	Day  string `json:"day"`
+	Name  string `json:"name"`
+	Item  string `json:"item"`
+	Day   string `json:"day"`
+	Color string `json:"color"`
 }
 
 //ToDoTask タスク

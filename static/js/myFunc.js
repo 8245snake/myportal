@@ -3,11 +3,69 @@ window.onload = function (event) {
     updateAllTickets();
     updateWeather();
     updateToDO();
+    updateSchedule();
 }
 
 function ZeroPadding(num, digit) {
     return ('00000000' + num).slice(-digit);
 }
+
+////////////////////////////////////////////////////////
+// スケジュール
+////////////////////////////////////////////////////////
+
+function updateSchedule(){
+
+    const spinner_id = "schedule-spinner";
+    var spinner = document.getElementById(spinner_id);
+    spinner.style.visibility = "visible";
+    //削除
+    deleteAllScheduleTable()
+
+    fetch("/api/schedule")
+    .then(response => response.json())
+    .then(data => {
+        const table_max = 4;
+        const rows_max = Math.floor(data.schedules.length / table_max);
+        var count = 1;
+        data.schedules.forEach(schedule => {
+            var index = Math.ceil(count / rows_max);
+            // index = (index < 1) ? 1 : index;
+            index = (index > 4) ? 4 : index;
+            insertScheduleRow(index, schedule.name, schedule.item, schedule.color);
+            count++;
+        }
+        );
+        spinner.style.visibility = "hidden";
+    }).catch(function(){
+        spinner.style.visibility = "hidden";
+    });
+}
+
+//スケジュール表の中身を消す（タイトルも）
+function deleteAllScheduleTable() {
+    const max = 4;
+    for (let index = 1; index <= max; index++) {
+        var table = document.getElementById('schedule-table-' + index);
+        table.textContent = null;
+    }
+}
+
+//Schedule表に行を追加する
+function insertScheduleRow(index, name, item, color) {
+    var table = document.getElementById('schedule-table-' + index);
+    var row = table.insertRow(-1);
+
+    var col_name = row.insertCell(-1);
+    col_name.appendChild(document.createTextNode(name));
+    col_name.setAttribute("width","50%");
+
+    var col_item = row.insertCell(-1);
+    col_item.appendChild(document.createTextNode(item));
+    col_item.style.backgroundColor = color;
+    col_name.setAttribute("width","50%");
+}
+
 
 ////////////////////////////////////////////////////////
 // ToDoリスト
@@ -89,10 +147,17 @@ function createTiDoItem(ID, title, timelimit, description) {
 
 //天気予報取得
 function updateWeather(){
+    const src_weather = "../static/etc/iframe_weather.html";
+    const src_loading = "../static/etc/iframe_loading.html";
+    var frame = document.getElementById("weather-frame");
+    frame.contentDocument.location.replace(src_loading);
+
     fetch("/api/weather")
         .then(response => response.json())
         .then(data => {
-            document.getElementById("weather-frame").contentDocument.location.reload(true);
+            frame.contentDocument.location.replace(src_weather);
+        }).catch(function(err){
+            frame.contentDocument.location.replace(src_weather);
         });
 }
 
@@ -111,7 +176,7 @@ function updateAllEvents() {
 function getTodaysEvents() {
     var list = document.getElementById("event-list");
     var spinner_id = 'event-spinner';
-    document.getElementById('event-spinner').style.visibility = "visible";
+    document.getElementById(spinner_id).style.visibility = "visible";
 
     fetch("/api/events")
         .then(response => response.json())
