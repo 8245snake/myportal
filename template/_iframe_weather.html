@@ -1,10 +1,16 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <link rel="stylesheet" href="iframe_weather.css">
+</head>
+
 <body>
-<div class="forecastCity">
-{{ . }}
-</div>
+    <div class="forecastCity">
+        {{ .FrameHTML }}
+    </div>
+
+    <img src="{{ .ImageURL }}" alt="画像" width="100%">
 </body>
+
 </html>
