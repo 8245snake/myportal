@@ -1,0 +1,19 @@
+{
+  "port": "4000",
+  "redmine": {
+    "host": "",
+    "api_key": ""
+  },
+  "backlog": {
+    "host": "",
+    "api_key": ""
+  },
+  "app_script": {
+    "url": "",
+    "oauth_token_path": ""
+  },
+  "gochikuru": {
+    "mail": "",
+    "password": ""
+  }
+}

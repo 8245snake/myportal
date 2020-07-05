@@ -13,7 +13,7 @@ import (
 )
 
 //RedmineAPIKey APIキー
-const RedmineAPIKey = "6e353c242541c24d7879ca11e60f6a55541a227d"
+var RedmineAPIKey = config.Redmine.APIKey
 
 //ResponseTicket レスポンス形式
 type ResponseTicket struct {
@@ -184,13 +184,13 @@ const (
 //GetTicketBacklog リクエスト送信
 func GetTicketBacklog() BacklogIssues {
 	var data BacklogIssues
-	req, err := http.NewRequest("GET", "https://hoge.backlog.jp/api/v2/issues", nil)
+	req, err := http.NewRequest("GET", "https://"+config.Backlog.Host+"/api/v2/issues", nil)
 	if err != nil {
 		return data
 	}
 
 	params := req.URL.Query()
-	params.Add("apiKey", "secret_key")
+	params.Add("apiKey", config.Backlog.APIKey)
 	params.Add("assigneeId[]", "255301")
 	params.Add("statusId[]", "1")
 	params.Add("statusId[]", "2")
@@ -292,7 +292,7 @@ func serveTicketTrac(w http.ResponseWriter, r *http.Request) {
 
 func getRedmineTickets(endpoint string) RedmineAPI {
 	var data RedmineAPI
-	req, err := http.NewRequest("GET", "https://10.212.252.83/redmine/projects/"+endpoint+"/issues.json", nil)
+	req, err := http.NewRequest("GET", "https://"+config.Redmine.Host+"/redmine/projects/"+endpoint+"/issues.json", nil)
 	if err != nil {
 		return data
 	}
@@ -341,7 +341,7 @@ func serveTicketRedmineBug(w http.ResponseWriter, r *http.Request) {
 		ticket.TicketType = TicketTypeRedmineBug
 		ticket.ID = strconv.Itoa(issue.ID)
 		ticket.Title = issue.Subject
-		ticket.URL = "https://10.212.252.83/redmine/issues/" + ticket.ID
+		ticket.URL = "https://" + config.Redmine.Host + "/redmine/issues/" + ticket.ID
 		ticket.MineStone = getCustonFieldValue(issue, "施設名")
 		ticket.TimeLimit = issue.DueDate
 		ticket.Status = issue.Status.Name
@@ -362,7 +362,7 @@ func serveTicketRedmineShipment(w http.ResponseWriter, r *http.Request) {
 		ticket.TicketType = TicketTypeRedmineShipment
 		ticket.ID = strconv.Itoa(issue.ID)
 		ticket.Title = issue.Subject
-		ticket.URL = "https://10.212.252.83/redmine/issues/" + ticket.ID
+		ticket.URL = "https://" + config.Redmine.Host + "/redmine/issues/" + ticket.ID
 		ticket.MineStone = getCustonFieldValue(issue, "施設リスト")
 		ticket.Status = issue.Status.Name
 		tickets.Tickets = append(tickets.Tickets, ticket)
@@ -382,7 +382,7 @@ func serveTicketRedmineECO(w http.ResponseWriter, r *http.Request) {
 		ticket.TicketType = TicketTypeRedmineECO
 		ticket.ID = getCustonFieldValue(issue, "文書管理番号")
 		ticket.Title = issue.Subject
-		ticket.URL = "https://10.212.252.83/redmine/issues/" + strconv.Itoa(issue.ID)
+		ticket.URL = "https://" + config.Redmine.Host + "/redmine/issues/" + strconv.Itoa(issue.ID)
 		ticket.MineStone = ""
 		ticket.TimeLimit = issue.DueDate
 		ticket.Status = issue.Status.Name
@@ -402,7 +402,7 @@ func serveTicketBacklog(w http.ResponseWriter, r *http.Request) {
 		ticket.TicketType = TicketTypeRedmineBacklog
 		ticket.ID = issue.IssueKey
 		ticket.Title = issue.Summary
-		ticket.URL = "https://hoge.backlog.jp/view/" + issue.IssueKey
+		ticket.URL = "https://" + config.Backlog.Host + "/view/" + issue.IssueKey
 		if len(issue.Milestone) > 0 {
 			ticket.MineStone = issue.Milestone[0].Name
 			ticket.TimeLimit = issue.Milestone[0].ReleaseDueDate.Format("2006/01/02")

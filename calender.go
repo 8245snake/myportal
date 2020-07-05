@@ -8,8 +8,10 @@ import (
 	"time"
 )
 
+//AppScriptURL GASのURL
+var AppScriptURL = config.AppScript.URL
+
 const (
-	AppScriptURL       = "https://script.google.com/macros/s/AKfycbxavm6qHSZ-0oHqfOBkJDxXWf-IChtMB-bfNmD6YUN4UxqU_JPn/exec"
 	AppScriptEvents    = "events"
 	AppScriptTasks     = "tasks"
 	AppScriptSchedules = "schedules"
@@ -84,7 +86,7 @@ type CalenderEvent struct {
 
 //getOAuthToken アクセストークンを取得する
 func getOAuthToken() string {
-	fileName := "C:/Users/USER/MyDrive/API_KEY.txt"
+	fileName := config.AppScript.OAuthTokenPath
 	bytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return ""
