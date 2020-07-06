@@ -159,7 +159,6 @@ function updateToDO(){
     .then(data => {
         var count = 1;
         data.tasks.forEach(task => {
-            console.log(task.title);
             var item = createTiDoItem(task.id, task.title, task.timelimit, task.description);
             item.id = "todo-item-" + count;
             list.appendChild(item);
@@ -232,6 +231,7 @@ function updateWeather(){
         .then(response => response.json())
         .then(data => {
             frame.contentDocument.location.replace(src_weather);
+            frame.contentDocument.location.reload(true);
         }).catch(function(err){
             frame.contentDocument.location.replace(src_weather);
         });
@@ -259,7 +259,6 @@ function getTodaysEvents() {
         .then(data => {
             var count = 1;
             data.events.forEach(event => {
-                console.log(event.title);
                 var start = new Date(event.start);
                 var end = new Date(event.end);
                 var time = ZeroPadding(start.getHours(), 2) + ':' + ZeroPadding(start.getMinutes(), 2) +
