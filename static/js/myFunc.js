@@ -231,7 +231,6 @@ function updateWeather(){
         .then(response => response.json())
         .then(data => {
             frame.contentDocument.location.replace(src_weather);
-            frame.contentDocument.location.reload(true);
         }).catch(function(err){
             frame.contentDocument.location.replace(src_weather);
         });
