@@ -4,10 +4,86 @@ window.onload = function (event) {
     updateWeather();
     updateToDO();
     updateSchedule();
+    updateLunch();
 }
 
 function ZeroPadding(num, digit) {
     return ('00000000' + num).slice(-digit);
+}
+
+////////////////////////////////////////////////////////
+// 弁当
+////////////////////////////////////////////////////////
+
+function updateLunch(){
+    //削除
+    document.getElementById('lunch').textContent = null;
+    //スピナー
+    const spinner_id = "lunch-spinner";
+    var spinner = document.getElementById(spinner_id);
+    spinner.style.visibility = "visible";
+
+    fetch("/api/gochikuru")
+    .then(response => response.json())
+    .then(data => {
+        data.products.forEach(product => {
+            insertLunchItem(product);
+            console.log(product);
+
+        });
+        spinner.style.visibility = "hidden";
+    }).catch(function(err){
+        console.log(err);
+        spinner.style.visibility = "hidden";
+    });
+}
+
+//リストの要素作成
+function insertLunchItem(product){
+    //販売元
+    var maker_tag = document.createElement("small");
+    maker_tag.appendChild(document.createTextNode(product.maker));
+    //商品名
+    var name_tag = document.createElement("h4");
+    name_tag.classList.add("mt-0");
+    name_tag.classList.add("mb-1");
+    name_tag.appendChild(document.createTextNode(product.name));
+    //値段
+    var price_tag = document.createElement("h5");
+    price_tag.appendChild(document.createTextNode(product.price));
+    //ボディ
+    var media_body = document.createElement("div");
+    media_body.classList.add("media-body");
+    media_body.appendChild(maker_tag);
+    media_body.appendChild(name_tag);
+    media_body.appendChild(price_tag);
+    //注文済みラベルの追加
+    if(product.amount > 0) {
+        var badge_tag = document.createElement("span");
+        badge_tag.classList.add("badge");
+        badge_tag.classList.add("badge-danger");
+        badge_tag.appendChild(document.createTextNode("注文済み"));
+        var ordered_tag = document.createElement("h1");
+        ordered_tag.appendChild(badge_tag);
+        ordered_tag.appendChild(document.createTextNode(product.amount + '個'));
+        media_body.appendChild(ordered_tag);
+    }
+
+    //画像
+    var img_tag = document.createElement("img");
+    img_tag.classList.add("d-flex");
+    img_tag.classList.add("ml-3");
+    img_tag.setAttribute("src", product.image_url);
+    img_tag.width = 300;
+
+    //親要素
+    var media_tag = document.createElement("div");
+    media_tag.classList.add("media");
+    media_tag.appendChild(media_body);
+    media_tag.appendChild(img_tag);
+
+    //追加
+    document.getElementById('lunch').appendChild(media_tag);
 }
 
 ////////////////////////////////////////////////////////

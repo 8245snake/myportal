@@ -237,7 +237,19 @@
             <div class="row">
                 <!-- ごちクル -->
                 <div class="col-lg-4 bg-light">
-                    ごちクル
+                    <div class="d-flex justify-content-between mb-1">
+                        <div>
+                            <span style="font-size: x-large;font-weight: bold;">ごちクルnow</span>
+                        </div>
+                        <div class="text-center">
+                            <div class="spinner-border" role="status" id="lunch-spinner">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="updateLunch();">再読み込み</button>
+                    </div>
+                    <!-- ここに弁当を表示 -->
+                    <div id="lunch"></div>
                 </div>
                 <!-- 自転車台数 -->
                 <div class="col-lg-5 bg-primary">
