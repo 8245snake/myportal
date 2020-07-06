@@ -11,6 +11,12 @@ function ZeroPadding(num, digit) {
     return ('00000000' + num).slice(-digit);
 }
 
+// 指定ミリ秒間だけループさせる
+function sleep(waitMsec) {
+    var startMsec = new Date();
+    while (new Date() - startMsec < waitMsec);
+  }
+
 ////////////////////////////////////////////////////////
 // 弁当
 ////////////////////////////////////////////////////////
@@ -180,13 +186,12 @@ function createTiDoItem(ID, title, timelimit, description) {
 
     var small_timelimit = document.createElement('small');
     var datetime = new Date(timelimit);
-    if (datetime){
-        small_timelimit.innerText = datetime.getFullYear() + '/' + datetime.getMonth() + '/' + datetime.getDate();
+    if (datetime != 'Invalid Date'){
+        small_timelimit.innerText = '期限：' + datetime.getFullYear() + '/' + datetime.getMonth() + '/' + datetime.getDate();
     }else{
-        small_timelimit.innerText = timelimit;
+        small_timelimit.innerText = '期限：' + ((timelimit != "")? timelimit:"なし");
     }
     
-
     var div = document.createElement('div');
     div.classList.add("d-flex");
     div.classList.add("w-100");
@@ -213,6 +218,58 @@ function createTiDoItem(ID, title, timelimit, description) {
     element.appendChild(hidden_ID);
     return element;
 }
+
+//登録
+function regTask(){
+    var title = document.getElementById('todo-modal-title');
+    var limit = document.getElementById('todo-modal-limit');
+    var description = document.getElementById('todo-modal-description');
+    //スピナー
+    const spinner_id = "todo-modal-spinner";
+    var spinner = document.getElementById(spinner_id);
+    spinner.removeAttribute("hidden");
+
+    var data = new Object();
+    data.type = "tasks";
+    var tasks = [];
+    var task = new Object();
+    task.title = title.value;
+    task.description = description.value;
+    task.timelimit = limit.value;
+    tasks.push(task);
+    data.tasks = tasks;
+
+    const method = "POST";
+    const body = JSON.stringify(data);
+    const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    };
+    fetch("/api/todo", {
+        method,
+        headers,
+        body
+    })
+    .then(response => response.json())
+    .then(data => {
+        spinner.setAttribute("hidden","true");
+        //modalを消す
+        title.value = "";
+        limit.value = "";
+        description.value = "";
+        $('#todo-modal').modal('hide');
+        updateToDO();
+    }).catch(function(err){
+        console.log(err);
+        spinner.setAttribute("hidden","true");
+        //modalを消す
+        title.value = "";
+        limit.value = "";
+        description.value = "";
+        $('#todo-modal').modal('hide');
+    });
+}
+
 
 ////////////////////////////////////////////////////////
 // 天気予報

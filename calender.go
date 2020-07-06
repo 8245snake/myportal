@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -33,8 +35,9 @@ func (r *ResponseCalender) SetMessage(msg string) {
 
 //ResponseToDoList リスト
 type ResponseToDoList struct {
-	Message string     `json:"message"`
-	Tasks   []ToDoTask `json:"tasks"`
+	Message     string     `json:"message"`
+	RequestType string     `json:"type"`
+	Tasks       []ToDoTask `json:"tasks"`
 }
 
 //SetMessage メッセージをセットする
@@ -150,20 +153,87 @@ func GetFromGAS(endpoint string, date *time.Time) (data ResponseFromGAS) {
 	return data
 }
 
+//PostToGAS GASに送信する（Bodyはそのまま送信し、Headerにアクセストークンを付加する）
+func PostToGAS(endpoint string, data io.Reader) ResponseFromGAS {
+	var respData ResponseFromGAS
+
+	req, err := http.NewRequest("POST", AppScriptURL, data)
+	if err != nil {
+		respData.SetMessage(err.Error())
+		return respData
+	}
+	token := getOAuthToken()
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		respData.SetMessage(err.Error())
+		return respData
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		respData.SetMessage(err.Error())
+		return respData
+	}
+
+	switch endpoint {
+	case AppScriptEvents:
+		var events ResponseCalender
+		err = json.NewDecoder(bytes.NewReader(b)).Decode(&events)
+		respData = &events
+	case AppScriptTasks:
+		var tasks ResponseToDoList
+		err = json.NewDecoder(bytes.NewReader(b)).Decode(&tasks)
+		respData = &tasks
+	default:
+		return respData
+	}
+
+	if err != nil {
+		respData.SetMessage(err.Error())
+		return respData
+	}
+	respData.SetMessage("OK")
+	return respData
+}
+
 func serveEvents(w http.ResponseWriter, r *http.Request) {
-	events := GetFromGAS(AppScriptEvents, nil)
-	jsondata, _ := json.Marshal(events)
-	w.Write(jsondata)
+	switch r.Method {
+	case http.MethodGet:
+		events := GetFromGAS(AppScriptEvents, nil)
+		jsondata, _ := json.Marshal(events)
+		w.Write(jsondata)
+	case http.MethodPost:
+		reader := bufio.NewReader(r.Body)
+		events := PostToGAS(AppScriptEvents, reader)
+		jsondata, _ := json.Marshal(events)
+		w.Write(jsondata)
+	}
 }
 
 func serveToDoList(w http.ResponseWriter, r *http.Request) {
-	todolist := GetFromGAS(AppScriptTasks, nil)
-	jsondata, _ := json.Marshal(todolist)
-	w.Write(jsondata)
+	switch r.Method {
+	case http.MethodGet:
+		todolist := GetFromGAS(AppScriptTasks, nil)
+		jsondata, _ := json.Marshal(todolist)
+		w.Write(jsondata)
+	case http.MethodPost:
+		reader := bufio.NewReader(r.Body)
+		todolist := PostToGAS(AppScriptTasks, reader)
+		jsondata, _ := json.Marshal(todolist)
+		w.Write(jsondata)
+	}
 }
 
 func serveSchedule(w http.ResponseWriter, r *http.Request) {
-	schedules := GetFromGAS(AppScriptSchedules, nil)
-	jsondata, _ := json.Marshal(schedules)
-	w.Write(jsondata)
+	switch r.Method {
+	case http.MethodGet:
+		schedules := GetFromGAS(AppScriptSchedules, nil)
+		jsondata, _ := json.Marshal(schedules)
+		w.Write(jsondata)
+	default:
+	}
+
 }
