@@ -28,8 +28,6 @@ function updateLunch(){
     .then(data => {
         data.products.forEach(product => {
             insertLunchItem(product);
-            console.log(product);
-
         });
         spinner.style.visibility = "hidden";
     }).catch(function(err){
@@ -110,10 +108,10 @@ function updateSchedule(){
             index = (index > 4) ? 4 : index;
             insertScheduleRow(index, schedule.name, schedule.item, schedule.color);
             count++;
-        }
-        );
+        });
         spinner.style.visibility = "hidden";
-    }).catch(function(){
+    }).catch(function(err){
+        console.log(err);
         spinner.style.visibility = "hidden";
     });
 }
@@ -232,6 +230,7 @@ function updateWeather(){
         .then(data => {
             frame.contentDocument.location.replace(src_weather);
         }).catch(function(err){
+            console.log(err);
             frame.contentDocument.location.replace(src_weather);
         });
 }
