@@ -1,4 +1,9 @@
-window.onload = function (event) {
+
+//window.onloadのタイミングでは遅いのでDOMを読み終わったらすぐに実行する
+document.addEventListener("DOMContentLoaded", init);
+
+//初期化処理
+function init(){
     updateAllEvents();
     updateAllTickets();
     updateWeather();
@@ -7,6 +12,7 @@ window.onload = function (event) {
     updateLunch();
 }
 
+//ゼロ埋め
 function ZeroPadding(num, digit) {
     return ('00000000' + num).slice(-digit);
 }
@@ -187,7 +193,8 @@ function createTiDoItem(ID, title, timelimit, description) {
     var small_timelimit = document.createElement('small');
     var datetime = new Date(timelimit);
     if (datetime != 'Invalid Date'){
-        small_timelimit.innerText = '期限：' + datetime.getFullYear() + '/' + datetime.getMonth() + '/' + datetime.getDate();
+        datetime = new Date(datetime.toLocaleString({ timeZone: 'Asia/Tokyo' }));
+        small_timelimit.innerText = '期限：' + datetime.getFullYear() + '/' + (datetime.getMonth() + 1) + '/' + datetime.getDate();
     }else{
         small_timelimit.innerText = '期限：' + ((timelimit != "")? timelimit:"なし");
     }
@@ -216,6 +223,10 @@ function createTiDoItem(ID, title, timelimit, description) {
     element.appendChild(div);
     element.appendChild(p_description);
     element.appendChild(hidden_ID);
+    element.ondblclick = function(e){
+        console.log(e.path);
+        $('#todo-modal').modal('show');
+    };
     return element;
 }
 
@@ -370,6 +381,77 @@ function deleteAllEvents() {
     //子要素を全て削除
     var list = document.getElementById("event-list");
     list.textContent = null;
+}
+
+//開始時間に加算する
+function addMinute(minute){
+    var today = new Date();
+    var startTimeTag = document.getElementById("event-modal-starttime");
+    var startTime = startTimeTag.value;
+    if (startTime == ""){
+        startTime = ZeroPadding(today.getHours(), 2) + ":" + ZeroPadding(today.getMinutes(), 2);
+        startTimeTag.value = startTime;
+    }
+    
+    var startDate = new Date(today.getFullYear() + "-" + (today.getMonth()+1) + "-" + today.getDate() + " " + startTimeTag.value);
+    startDate.setMinutes(startDate.getMinutes() + minute);
+    document.getElementById("event-modal-endtime").value = ZeroPadding(startDate.getHours(), 2) + ":" + ZeroPadding(startDate.getMinutes(), 2);
+}
+
+//新規登録
+function regEvent(){
+    //入力欄
+    var startTime = document.getElementById("event-modal-starttime");
+    var endTime = document.getElementById("event-modal-endtime");
+    var title = document.getElementById('event-modal-title');
+    var description = document.getElementById('event-modal-description');
+    //スピナー
+    const spinner_id = "event-modal-spinner";
+    var spinner = document.getElementById(spinner_id);
+    spinner.removeAttribute("hidden");
+
+    var data = new Object();
+    data.type = "events";
+    var events = [];
+    var event = new Object();
+    event.title = title.value;
+    event.description = description.value;
+    var today = new Date();
+    event.start = today.getFullYear() + "-" + (today.getMonth()+1) + "-" + today.getDate() + " " + startTime.value;
+    event.end = today.getFullYear() + "-" + (today.getMonth()+1) + "-" + today.getDate() + " " + endTime.value;
+    events.push(event);
+    data.events = events;
+
+    const method = "POST";
+    const body = JSON.stringify(data);
+    const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    };
+    fetch("/api/todo", {
+        method,
+        headers,
+        body
+    })
+    .then(response => response.json())
+    .then(data => {
+        spinner.setAttribute("hidden","true");
+        //modalを消す
+        title.value = "";
+        description.value = "";
+        startTime = "";
+        endTime = "";
+        $('#event-modal').modal('hide');
+        updateAllEvents();
+    }).catch(function(err){
+        console.log(err);
+        spinner.setAttribute("hidden","true");
+        //modalを消す
+        title.value = "";
+        limit.value = "";
+        description.value = "";
+        $('#event-modal').modal('hide');
+    });
 }
 
 ////////////////////////////////////////////////////////

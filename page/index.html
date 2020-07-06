@@ -291,9 +291,9 @@
                                         <label for="event-modal-buttons">　</label>
                                         <div class="btn-group-sm" role="group" aria-label="Basic example"
                                             id="event-modal-buttons">
-                                            <button type="button" class="btn btn-primary">30分</button>
-                                            <button type="button" class="btn btn-primary">1時間</button>
-                                            <button type="button" class="btn btn-primary">次の予定まで</button>
+                                            <button type="button" class="btn btn-primary" onclick="addMinute(30);">30分</button>
+                                            <button type="button" class="btn btn-primary" onclick="addMinute(60);">1時間</button>
+                                            <!-- <button type="button" class="btn btn-primary">次の予定まで</button> -->
                                         </div>
                                     </div>
                                 </div>
@@ -310,7 +310,9 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary">Save</button>
+                            <button type="button" class="btn btn-primary" onclick="regEvent();">
+                                Save<div id="event-modal-spinner" class="spinner-border spinner-border-sm" role="status" hidden="true"></div>
+                            </button>
                         </div>
                     </div>
                 </div>
