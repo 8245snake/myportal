@@ -439,8 +439,8 @@ function regEvent(){
         //modalを消す
         title.value = "";
         description.value = "";
-        startTime = "";
-        endTime = "";
+        startTime.value = "";
+        endTime.value = "";
         $('#event-modal').modal('hide');
         updateAllEvents();
     }).catch(function(err){
